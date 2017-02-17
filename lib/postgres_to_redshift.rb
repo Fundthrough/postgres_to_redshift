@@ -72,7 +72,7 @@ class PostgresToRedshift
   end
 
   def tables
-    source_connection.exec("SELECT * FROM information_schema.tables WHERE table_schema = '#{source_schema}' AND table_type in ('BASE TABLE', 'VIEW')").map do |table_attributes|
+    source_connection.exec("SELECT * FROM information_schema.tables WHERE table_schema = '#{PostgresToRedshift.source_schema}' AND table_type in ('BASE TABLE', 'VIEW')").map do |table_attributes|
       table = Table.new(attributes: table_attributes)
       next if table.name =~ /^pg_/
       table.columns = column_definitions(table)
@@ -81,7 +81,7 @@ class PostgresToRedshift
   end
 
   def column_definitions(table)
-    source_connection.exec("SELECT * FROM information_schema.columns WHERE table_schema = '#{source_schema}' AND table_name='#{table.name}' order by ordinal_position")
+    source_connection.exec("SELECT * FROM information_schema.columns WHERE table_schema = '#{PostgresToRedshift.source_schema}' AND table_name='#{table.name}' order by ordinal_position")
   end
 
   def s3
@@ -102,7 +102,7 @@ class PostgresToRedshift
 
     begin
       puts "Downloading #{table}"
-      copy_command = "COPY (SELECT #{table.columns_for_copy} FROM #{source_schema}.#{table.name}) TO STDOUT WITH DELIMITER '|'"
+      copy_command = "COPY (SELECT #{table.columns_for_copy} FROM #{PostgresToRedshift.source_schema}.#{table.name}) TO STDOUT WITH DELIMITER '|'"
 
       source_connection.copy_data(copy_command) do
         while row = source_connection.get_copy_data
