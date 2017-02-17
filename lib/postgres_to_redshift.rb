@@ -18,14 +18,8 @@ class PostgresToRedshift
   MEGABYTE = KILOBYTE * 1024
   GIGABYTE = MEGABYTE * 1024
 
-  def self.update_schema
-    target_connection.exec("CREATE SCHEMA IF NOT EXISTS #{target_schema}")
-  end
-
   def self.update_tables
     update_tables = PostgresToRedshift.new
-
-    update_schema
 
     update_tables.tables.each do |table|
       target_connection.exec("CREATE TABLE IF NOT EXISTS #{target_schema}.#{target_connection.quote_ident(table.target_table_name)} (#{table.columns_for_create})")
@@ -74,7 +68,7 @@ class PostgresToRedshift
   end
 
   def tables
-    source_connection.exec("SELECT * FROM information_schema.tables WHERE table_schema = 'public' AND table_type in ('BASE TABLE', 'VIEW')").map do |table_attributes|
+    source_connection.exec("SELECT * FROM information_schema.tables WHERE table_schema IN ('public','sfopportunities') AND table_type in ('BASE TABLE', 'VIEW')").map do |table_attributes|
       table = Table.new(attributes: table_attributes)
       next if table.name =~ /^pg_/
       table.columns = column_definitions(table)
@@ -83,7 +77,7 @@ class PostgresToRedshift
   end
 
   def column_definitions(table)
-    source_connection.exec("SELECT * FROM information_schema.columns WHERE table_schema='public' AND table_name='#{table.name}' order by ordinal_position")
+    source_connection.exec("SELECT * FROM information_schema.columns WHERE table_schema IN ('public','sfopportunities') AND table_name='#{table.name}' order by ordinal_position")
   end
 
   def s3
@@ -151,5 +145,7 @@ class PostgresToRedshift
     target_connection.exec("COPY #{PostgresToRedshift.target_schema}.#{target_connection.quote_ident(table.target_table_name)} FROM 's3://#{ENV['S3_DATABASE_EXPORT_BUCKET']}/#{PostgresToRedshift.target_schema}/#{table.target_table_name}.psv.gz' CREDENTIALS 'aws_access_key_id=#{ENV['S3_DATABASE_EXPORT_ID']};aws_secret_access_key=#{ENV['S3_DATABASE_EXPORT_KEY']}' GZIP TRUNCATECOLUMNS ESCAPE DELIMITER as '|';")
 
     target_connection.exec("COMMIT;")
+
+    target_connection.exec("DROP TABLE #{PostgresToRedshift.target_schema}.#{table.target_table_name}_updating")
   end
 end
