@@ -142,7 +142,7 @@ class PostgresToRedshift
 
   def import_table(table)
 
-    puts "Importing #{table.target_table_name}"
+    puts "Importing #{PostgresToRedshift.target_schema}.#{table.target_table_name}"
 
     if PostgresToRedshift.delete_option == 'drop'
 
