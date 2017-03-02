@@ -47,7 +47,7 @@ class PostgresToRedshift
   end
 
   def self.delete_option
-    @delete_option ||= URI.parse(ENV["POSTGRES_TO_REDSHIFT_DELETE"])
+    @delete_option ||= ENV["POSTGRES_TO_REDSHIFT_DELETE"]
   end
 
   def self.source_connection
@@ -142,7 +142,7 @@ class PostgresToRedshift
 
   def import_table(table)
 
-    if delete_option == 'drop'
+    if PostgresToRedshift.delete_option == 'drop'
       puts "Importing #{table.target_table_name}"
       target_connection.exec("DROP TABLE IF EXISTS #{PostgresToRedshift.target_schema}.#{table.target_table_name}_updating")
 
@@ -158,7 +158,7 @@ class PostgresToRedshift
 
       target_connection.exec("DROP TABLE #{PostgresToRedshift.target_schema}.#{table.target_table_name}_updating")
 
-    elsif delete_option == 'truncate'
+    elsif PostgresToRedshift.delete_option == 'truncate'
       puts "Importing #{table.target_table_name}"
       target_connection.exec("TRUNCATE TABLE #{PostgresToRedshift.target_schema}.#{table.target_table_name}")
 
