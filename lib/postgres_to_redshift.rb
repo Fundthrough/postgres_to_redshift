@@ -105,7 +105,7 @@ class PostgresToRedshift
     bucket.objects.with_prefix("#{PostgresToRedshift.target_schema}/#{table.target_table_name}.psv.gz").delete_all
 
     begin
-      puts "Downloading #{table}"
+      puts "DOWNLOADING #{table}"
       copy_command = "COPY (SELECT #{table.columns_for_copy} FROM #{PostgresToRedshift.source_schema}.#{table.name}) TO STDOUT WITH DELIMITER '|'"
 
       source_connection.copy_data(copy_command) do
@@ -134,7 +134,7 @@ class PostgresToRedshift
   end
 
   def upload_table(table, buffer, chunk)
-    puts "Uploading #{table.target_table_name}.#{chunk}"
+    puts "UPLOADING #{table.target_table_name}.#{chunk}"
 
     bucket.objects["#{PostgresToRedshift.target_schema}/#{table.target_table_name}.psv.gz.#{chunk}"].write(buffer, acl: :authenticated_read)
 
@@ -142,22 +142,18 @@ class PostgresToRedshift
 
   def import_table(table)
 
-    puts "Importing #{PostgresToRedshift.target_schema}.#{table.target_table_name}"
+    puts "IMPORTING #{PostgresToRedshift.target_schema}.#{table.target_table_name}"
 
     if PostgresToRedshift.delete_option == 'drop'
 
       puts "DROP TABLE IF EXISTS #{PostgresToRedshift.target_schema}.#{table.target_table_name}"
       target_connection.exec("DROP TABLE IF EXISTS #{PostgresToRedshift.target_schema}.#{table.target_table_name}")
 
-      target_connection.exec("BEGIN;")
-
       puts "CREATE TABLE #{PostgresToRedshift.target_schema}.#{table.target_table_name}"
       target_connection.exec("CREATE TABLE #{PostgresToRedshift.target_schema}.#{target_connection.quote_ident(table.target_table_name)} (#{table.columns_for_create})")
 
       puts "COPY TABLE to #{PostgresToRedshift.target_schema}.#{table.target_table_name}"
       target_connection.exec("COPY #{PostgresToRedshift.target_schema}.#{target_connection.quote_ident(table.target_table_name)} FROM 's3://#{ENV['S3_DATABASE_EXPORT_BUCKET']}/#{PostgresToRedshift.target_schema}/#{table.target_table_name}.psv.gz' CREDENTIALS 'aws_access_key_id=#{ENV['S3_DATABASE_EXPORT_ID']};aws_secret_access_key=#{ENV['S3_DATABASE_EXPORT_KEY']}' GZIP TRUNCATECOLUMNS ESCAPE DELIMITER as '|';")
-
-      target_connection.exec("COMMIT;")
 
     elsif PostgresToRedshift.delete_option == 'truncate'
 
@@ -167,12 +163,8 @@ class PostgresToRedshift
       puts "TRUNCATE TABLE #{PostgresToRedshift.target_schema}.#{table.target_table_name}"
       target_connection.exec("TRUNCATE TABLE #{PostgresToRedshift.target_schema}.#{table.target_table_name}")
 
-      target_connection.exec("BEGIN;")
-
       puts "COPY TABLE to #{PostgresToRedshift.target_schema}.#{table.target_table_name}"
       target_connection.exec("COPY #{PostgresToRedshift.target_schema}.#{target_connection.quote_ident(table.target_table_name)} FROM 's3://#{ENV['S3_DATABASE_EXPORT_BUCKET']}/#{PostgresToRedshift.target_schema}/#{table.target_table_name}.psv.gz' CREDENTIALS 'aws_access_key_id=#{ENV['S3_DATABASE_EXPORT_ID']};aws_secret_access_key=#{ENV['S3_DATABASE_EXPORT_KEY']}' GZIP TRUNCATECOLUMNS ESCAPE DELIMITER as '|';")
-
-      target_connection.exec("COMMIT;")
 
     else
       puts "missing delete_option"
