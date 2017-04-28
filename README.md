@@ -48,4 +48,4 @@ postgres_to_redshift
 UPDATES 2017-04-28
 1. remove any operational tables from moving over to AWS (table_name NOT IN ('ar_internal_metadata','schema_migrations') AND LEFT(table_name,1) != '_')
 2. add COMPUPDATE ON to enable automatic compression during COPY command
-3.
+3. automtically assign "sortkey distkey" to "id" column
