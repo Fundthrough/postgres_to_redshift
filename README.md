@@ -24,6 +24,7 @@ Or install it yourself as:
 
 Set your source and target databases, as well as your s3 intermediary.
 
+### postgres_to_redshift
 ```bash
 export POSTGRES_TO_REDSHIFT_SOURCE_URI='postgres://username:password@host:port/database-name'
 export POSTGRES_TO_REDSHIFT_TARGET_URI='postgres://username:password@host:port/database-name'
@@ -37,6 +38,17 @@ export POSTGRES_TO_REDSHIFT_DELETE_OPTION='truncate|drop'	#this define whether t
 postgres_to_redshift
 ```
 
+### postgres_to_s3
+```bash
+export POSTGRES_TO_S3_SOURCE_URI='postgres://username:password@host:port/database-name'
+export POSTGRES_TO_S3_SOURCE_SCHEMA='schema_name'
+export POSTGRES_TO_S3_S3_DATABASE_EXPORT_ID='yourid'
+export POSTGRES_TO_S3_S3_DATABASE_EXPORT_KEY='yourkey'
+export POSTGRES_TO_S3_S3_DATABASE_EXPORT_BUCKET='some-bucket-to-use'
+
+postgres_to_s3
+```
+
 ## Contributing
 
 1. Fork it ( https://github.com/kitchensurfing/postgres_to_redshift/fork )
@@ -46,6 +58,10 @@ postgres_to_redshift
 5. Create a new Pull Request
 
 UPDATES 2017-04-28
-1. remove any operational tables from moving over to AWS (table_name NOT IN ('ar_internal_metadata','schema_migrations') AND LEFT(table_name,1) != '_')
-2. add COMPUPDATE ON to enable automatic compression during COPY command
-3. automtically assign "sortkey distkey" to "id" column
+1. Remove any operational tables from moving over to AWS (table_name NOT IN ('ar_internal_metadata','schema_migrations') AND LEFT(table_name,1) != '_')
+2. Add COMPUPDATE ON to enable automatic compression during COPY command
+3. Automtically assign "sortkey distkey" to "id" column
+
+UPDATES 2017-05-03
+1. Modify to gem to load data from Audit to S3 only
+2. New Class call postgres_to_s3
