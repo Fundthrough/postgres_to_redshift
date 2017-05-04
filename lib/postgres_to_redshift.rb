@@ -1,11 +1,11 @@
-require "postgres_to_redshift/version"
+require "helper/version"
 require 'pg'
 require 'uri'
 require 'aws-sdk-v1'
 require 'zlib'
 require 'tempfile'
-require "postgres_to_redshift/table"
-require "postgres_to_redshift/column"
+require "helper/table"
+require "helper/column"
 
 class PostgresToRedshift
   class << self
@@ -77,7 +77,7 @@ class PostgresToRedshift
 
   def tables
     source_connection.exec("SELECT * FROM information_schema.tables WHERE table_schema = '#{PostgresToRedshift.source_schema}' AND table_type in ('BASE TABLE') AND table_name NOT IN ('ar_internal_metadata','schema_migrations') AND LEFT(table_name,1) != '_'").map do |table_attributes|
-      table = Table.new(attributes: table_attributes)
+      table = Helper::Table.new(attributes: table_attributes)
       next if table.name =~ /^pg_/
       table.columns = column_definitions(table)
       table

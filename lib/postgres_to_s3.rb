@@ -1,11 +1,11 @@
-require "postgres_to_redshift/version"
+require "helper/version"
 require 'pg'
 require 'uri'
 require 'aws-sdk-v1'
 require 'zlib'
 require 'tempfile'
-require "postgres_to_redshift/table"
-require "postgres_to_redshift/column"
+require "helper/table"
+require "helper/column"
 
 class PostgresToS3
   class << self
@@ -53,7 +53,7 @@ class PostgresToS3
 
   def tables
     source_connection.exec("SELECT * FROM information_schema.tables WHERE table_schema = '#{PostgresToS3.source_schema}' AND table_name = '#{PostgresToS3.source_table}'").map do |table_attributes|
-      table = PostgresToRedshift::Table.new(attributes: table_attributes)
+      table = Helper::Table.new(attributes: table_attributes)
       next if table.name =~ /^pg_/
       table.columns = column_definitions(table)
       table
