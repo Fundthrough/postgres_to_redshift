@@ -35,7 +35,7 @@ class PostgresToS3
   end
 
   def self.source_table
-    @source_schema ||= ENV['P2S3_SOURCE_TABLE']
+    @source_table ||= ENV['P2S3_SOURCE_TABLE']
   end
 
   def self.source_connection
@@ -53,7 +53,7 @@ class PostgresToS3
 
   def tables
     source_connection.exec("SELECT * FROM information_schema.tables WHERE table_schema = '#{PostgresToS3.source_schema}' AND table_name = '#{PostgresToS3.source_table}'").map do |table_attributes|
-      table = Table.new(attributes: table_attributes)
+      table = PostgresToRedshift::Table.new(attributes: table_attributes)
       next if table.name =~ /^pg_/
       table.columns = column_definitions(table)
       table
@@ -77,8 +77,6 @@ class PostgresToS3
     zip = Zlib::GzipWriter.new(tmpfile)
     chunksize = 5 * GIGABYTE # uncompressed
     chunk = 1
-
-    #bucket.objects.with_prefix("#{PostgresToS3.target_schema}/#{table.target_table_name}.psv.gz").delete_all
 
     begin
       puts "DOWNLOADING #{table}"
