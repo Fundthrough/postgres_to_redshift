@@ -134,7 +134,7 @@ class PostgresToRedshift
   end
 
   def upload_table(table, buffer, chunk)
-    puts "UPLOADING #{table.target_table_name}.#{chunk}"
+    puts "UPLOADING #{PostgresToRedshift.target_schema}/#{table.target_table_name}.psv.gz.#{chunk}"
 
     bucket.objects["#{PostgresToRedshift.target_schema}/#{table.target_table_name}.psv.gz.#{chunk}"].write(buffer, acl: :authenticated_read)
 
