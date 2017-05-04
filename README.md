@@ -40,12 +40,12 @@ postgres_to_redshift
 
 ### postgres_to_s3
 ```bash
-export POSTGRES_TO_S3_SOURCE_URI='postgres://username:password@host:port/database-name'
-export POSTGRES_TO_S3_SOURCE_SCHEMA='schema_name'
-export POSTGRES_TO_S3_SOURCE_TABLE='table_name'
-export POSTGRES_TO_S3_S3_DATABASE_EXPORT_ID='yourid'
-export POSTGRES_TO_S3_S3_DATABASE_EXPORT_KEY='yourkey'
-export POSTGRES_TO_S3_S3_DATABASE_EXPORT_BUCKET='some-bucket-to-use'
+export P2S3_SOURCE_URI='postgres://username:password@host:port/database-name'
+export P2S3_SOURCE_SCHEMA='schema_name'
+export P2S3_SOURCE_TABLE='table_name'
+export P2S3_S3_EXPORT_ID='yourid'
+export P2S3_S3_EXPORT_KEY='yourkey'
+export P2S3_S3_EXPORT_BUCKET='some-bucket-to-use'
 
 postgres_to_s3
 ```
