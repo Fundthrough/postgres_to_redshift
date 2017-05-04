@@ -88,7 +88,7 @@ class PostgresToS3
 
     begin
       puts "DOWNLOADING #{table}"
-      copy_command = "COPY (SELECT #{table.columns_for_copy} FROM #{PostgresToS3.source_schema}.#{table.name} WHERE service_name = #{PostgresToS3.service_name} AND createda_at::date = #{PostgresToS3.archive_date} ) TO STDOUT WITH DELIMITER '|'"
+      copy_command = "COPY (SELECT #{table.columns_for_copy} FROM #{PostgresToS3.source_schema}.#{table.name} WHERE service_name = '#{PostgresToS3.service_name}' AND createda_at::date = '#{PostgresToS3.archive_date}') TO STDOUT WITH DELIMITER '|'"
 
       source_connection.copy_data(copy_command) do
         while row = source_connection.get_copy_data
