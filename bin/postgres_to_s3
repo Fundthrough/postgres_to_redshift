@@ -2,4 +2,4 @@
 
 require 'postgres_to_s3'
 
-PostgresToRedshift.update_tables
+PostgresToS3.archive_tables

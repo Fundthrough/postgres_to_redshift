@@ -18,11 +18,11 @@ class PostgresToS3
   MEGABYTE = KILOBYTE * 1024
   GIGABYTE = MEGABYTE * 1024
 
-  def self.update_tables
-    update_tables = PostgresToS3.new
+  def self.archive_tables
+    archive_tables = PostgresToS3.new
 
-    update_tables.tables.each do |table|
-      update_tables.copy_table(table)
+    archive_tables.tables.each do |table|
+      archive_tables.copy_table(table)
     end
   end
 
