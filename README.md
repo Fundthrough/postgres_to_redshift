@@ -46,13 +46,15 @@ export P2S3_SOURCE_TABLE='table_name'
 export P2S3_S3_EXPORT_ID='yourid'
 export P2S3_S3_EXPORT_KEY='yourkey'
 export P2S3_S3_EXPORT_BUCKET='some-bucket-to-use'
+export P2S3_SERVICE_NAME='service_name in audits table'
+export P2S3_ARCHIVE_DATE='created_at in audits table in the format YYYY-MM-DD'
 
 postgres_to_s3
 ```
 
 ## Contributing
 
-1. Fork it ( https://github.com/kitchensurfing/postgres_to_redshift/fork )
+1. Fork it ( https://github.com/kitchensurfing/postgres_to_redshift/fork)
 2. Create your feature branch (`git checkout -b my-new-feature`)
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)

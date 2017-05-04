@@ -9,7 +9,7 @@ require "helper/column"
 
 class PostgresToS3
   class << self
-    attr_accessor :source_uri, :source_schema, :source_table
+    attr_accessor :source_uri, :source_schema, :source_table, :service_name, :archive_date
   end
 
   attr_reader :source_connection, :s3
@@ -36,6 +36,14 @@ class PostgresToS3
 
   def self.source_table
     @source_table ||= ENV['P2S3_SOURCE_TABLE']
+  end
+
+  def self.service_name
+    @service_name ||= ENV['P2S3_SERVICE_NAME']
+  end
+
+  def self.archive_date
+    @archive_date ||= ENV['P2S3_ARCHIVE_DATE']
   end
 
   def self.source_connection
@@ -80,7 +88,7 @@ class PostgresToS3
 
     begin
       puts "DOWNLOADING #{table}"
-      copy_command = "COPY (SELECT #{table.columns_for_copy} FROM #{PostgresToS3.source_schema}.#{table.name}) TO STDOUT WITH DELIMITER '|'"
+      copy_command = "COPY (SELECT #{table.columns_for_copy} FROM #{PostgresToS3.source_schema}.#{table.name} WHERE service_name = #{PostgresToS3.service_name} AND createda_at::date = #{PostgresToS3.archive_date} ) TO STDOUT WITH DELIMITER '|'"
 
       source_connection.copy_data(copy_command) do
         while row = source_connection.get_copy_data
@@ -110,7 +118,7 @@ class PostgresToS3
   def upload_table(table, buffer, chunk)
     puts "UPLOADING #{table.target_table_name}.#{chunk}"
 
-    bucket.objects["#{PostgresToS3.source_schema}/#{table.target_table_name}.psv.gz.#{chunk}"].write(buffer, acl: :authenticated_read)
+    bucket.objects["#{PostgresToS3.service_name}/#{PostgresToS3.service_name}-#{PostgresToS3.archive_date}-#{table.target_table_name}.psv.gz.#{chunk}"].write(buffer, acl: :authenticated_read)
 
   end
 end
