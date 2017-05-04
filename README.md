@@ -26,14 +26,14 @@ Set your source and target databases, as well as your s3 intermediary.
 
 ### postgres_to_redshift
 ```bash
-export POSTGRES_TO_REDSHIFT_SOURCE_URI='postgres://username:password@host:port/database-name'
-export POSTGRES_TO_REDSHIFT_TARGET_URI='postgres://username:password@host:port/database-name'
-export POSTGRES_TO_REDSHIFT_S3_DATABASE_EXPORT_ID='yourid'
-export POSTGRES_TO_REDSHIFT_S3_DATABASE_EXPORT_KEY='yourkey'
-export POSTGRES_TO_REDSHIFT_S3_DATABASE_EXPORT_BUCKET='some-bucket-to-use'
-export POSTGRES_TO_REDSHIFT_SOURCE_SCHEMA='schema_name'
-export POSTGRES_TO_REDSHIFT_TARGET_SCHEMA='schema_name'  #make sure target_schema exist in target DB
-export POSTGRES_TO_REDSHIFT_DELETE_OPTION='truncate|drop'	#this define whether the destination tables should be truncated or drop
+export P2RS_SOURCE_URI='postgres://username:password@host:port/database-name'
+export P2RS_TARGET_URI='postgres://username:password@host:port/database-name'
+export P2RS_S3_EXPORT_ID='yourid'
+export P2RS_S3_EXPORT_KEY='yourkey'
+export P2RS_S3_EXPORT_BUCKET='some-bucket-to-use'
+export P2RS_SOURCE_SCHEMA='schema_name'
+export P2RS_TARGET_SCHEMA='schema_name'  #make sure target_schema exist in target DB
+export P2RS_DELETE_OPTION='truncate|drop'	#this define whether the destination tables should be truncated or drop
 
 postgres_to_redshift
 ```
