@@ -73,7 +73,7 @@ class PostgresToS3
   end
 
   def copy_table(table)
-    tmpfile = Tempfile.new("psql2rs")
+    tmpfile = Tempfile.new("psql2s3")
     zip = Zlib::GzipWriter.new(tmpfile)
     chunksize = 5 * GIGABYTE # uncompressed
     chunk = 1
@@ -94,7 +94,7 @@ class PostgresToS3
             chunk += 1
             zip.close unless zip.closed?
             tmpfile.unlink
-            tmpfile = Tempfile.new("psql2rs")
+            tmpfile = Tempfile.new("psql2s3")
             zip = Zlib::GzipWriter.new(tmpfile)
           end
         end
