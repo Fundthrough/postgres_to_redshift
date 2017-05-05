@@ -68,3 +68,11 @@ UPDATES 2017-04-28
 UPDATES 2017-05-03
 1. Modify to gem to load data from Audit to S3 only
 2. New Class call postgres_to_s3
+
+
+Difference between RS and S3
+RS: export data from posgres without HEADER, load entire table as-is
+S3: export data with HEADER, COPY command must ignore first row
+
+RS: interim files in S3 is deleted from S3 bucket on the next data load
+S3: unless an existing files already exist, files will never get deleted
