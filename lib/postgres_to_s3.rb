@@ -84,7 +84,7 @@ class PostgresToS3
     tmpfile = Tempfile.new("psql2s3")
     zip = Zlib::GzipWriter.new(tmpfile)
     chunksize = 5 * GIGABYTE # uncompressed
-    chunk = 1
+    chunk = 2
 
     begin
       puts "DOWNLOADING #{table}"
