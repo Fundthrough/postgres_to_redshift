@@ -2,8 +2,8 @@ PATH
   remote: .
   specs:
     postgres_to_redshift (0.1.2)
-      aws-sdk-v1 (= 1.66)
-      pg (= 0.17.0)
+      aws-sdk-v1 (= 1.66.0)
+      pg (= 0.17.1)
 
 GEM
   remote: https://rubygems.org/
@@ -16,7 +16,7 @@ GEM
     mini_portile2 (2.1.0)
     nokogiri (1.7.2)
       mini_portile2 (~> 2.1.0)
-    pg (0.17.0)
+    pg (0.17.1)
     rake (10.4.2)
     rspec (3.2.0)
       rspec-core (~> 3.2.0)
@@ -38,7 +38,7 @@ PLATFORMS
 DEPENDENCIES
   bundler (~> 1.6)
   postgres_to_redshift!
-  rake
+  rake (= 10.4.2)
   rspec
 
 BUNDLED WITH

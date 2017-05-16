@@ -4,6 +4,6 @@ source 'https://rubygems.org'
 gemspec
 
 group :test do
-  gem 'rake'
+  gem 'rake', "10.4.2"
   gem 'rspec'
 end
