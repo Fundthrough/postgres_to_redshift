@@ -77,7 +77,10 @@ class PostgresToS3
   end
 
   def column_definitions(table)
-    source_connection.exec("SELECT * FROM information_schema.columns WHERE table_schema = '#{PostgresToS3.source_schema}' AND table_name='#{table.name}' order by ordinal_position")
+    source_connection.exec("SELECT *
+                            FROM information_schema.columns
+                            WHERE table_schema = '#{PostgresToS3.source_schema}' AND table_name='#{table.name}'
+                            ORDER BY ordinal_position")
   end
 
   def s3
@@ -96,7 +99,10 @@ class PostgresToS3
 
     begin
       puts "DOWNLOADING #{table}"
-      copy_command = "COPY (SELECT #{table.columns_for_copy} FROM #{PostgresToS3.source_schema}.#{table.name} WHERE lower(service_name) = lower('#{PostgresToS3.service_name}') AND #{PostgresToS3.archive_field}::date = '#{PostgresToS3.archive_date}') TO STDOUT WITH DELIMITER '|'"
+      copy_command = "COPY (SELECT #{table.columns_for_copy}
+                            FROM #{PostgresToS3.source_schema}.#{table.name}
+                            WHERE lower(service_name) = lower('#{PostgresToS3.service_name}') AND #{PostgresToS3.archive_field}::date = '#{PostgresToS3.archive_date}')
+                            TO STDOUT WITH DELIMITER '|'"
 
       source_connection.copy_data(copy_command) do
         while row = source_connection.get_copy_data
