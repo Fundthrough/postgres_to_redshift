@@ -105,14 +105,14 @@ class PostgresToS3
 
     begin
       puts "DOWNLOADING #{table}"
-      copy_command = <<-SQL
+      copy_to_command = <<-SQL
         COPY (
           SELECT #{table.columns_for_copy}
           FROM #{PostgresToS3.source_schema}.#{table.name}
           WHERE lower(service_name) = lower('#{PostgresToS3.service_name}') AND #{PostgresToS3.archive_field}::date = '#{PostgresToS3.archive_date}'
           ) TO STDOUT WITH DELIMITER '|'
       SQL
-      source_connection.copy_data(copy_command) do
+      source_connection.copy_data(copy_to_command) do
         while row = source_connection.get_copy_data
           zip.write(row)
           if (zip.pos > chunksize)
