@@ -76,16 +76,26 @@ class PostgresToRedshift
   end
 
   def tables
-    source_connection.exec("SELECT * FROM information_schema.tables WHERE table_schema = '#{PostgresToRedshift.source_schema}' AND table_type in ('BASE TABLE') AND table_name NOT IN ('ar_internal_metadata','schema_migrations') AND LEFT(table_name,1) != '_'").map do |table_attributes|
-      table = Helper::Table.new(attributes: table_attributes)
-      next if table.name =~ /^pg_/
+    table_command = <<-SQL
+      SELECT *
+      FROM information_schema.tables
+      WHERE table_schema = '#{PostgresToRedshift.source_schema}' AND table_type in ('BASE TABLE') AND table_name NOT IN ('ar_internal_metadata','schema_migrations') AND LEFT(table_name,1) != '_'
+    SQL
+    source_connection.exec(table_command).map do |table_attributes|
+    table = Helper::Table.new(attributes: table_attributes)
+    next if table.name =~ /^pg_/
       table.columns = column_definitions(table)
       table
     end.compact
   end
 
   def column_definitions(table)
-    source_connection.exec("SELECT * FROM information_schema.columns WHERE table_schema = '#{PostgresToRedshift.source_schema}' AND table_name='#{table.name}' order by ordinal_position")
+    column_command = <<-SQL
+      SELECT *
+      FROM information_schema.columns
+      WHERE table_schema = '#{PostgresToRedshift.source_schema}' AND table_name='#{table.name}' order by ordinal_position
+    SQL
+    source_connection.exec(column_command)
   end
 
   def s3
@@ -106,8 +116,12 @@ class PostgresToRedshift
 
     begin
       puts "DOWNLOADING #{table}"
-      copy_command = "COPY (SELECT #{table.columns_for_copy} FROM #{PostgresToRedshift.source_schema}.#{table.name}) TO STDOUT WITH DELIMITER '|'"
-
+      copy_command = <<-SQL
+        COPY (
+          SELECT #{table.columns_for_copy}
+          FROM #{PostgresToRedshift.source_schema}.#{table.name}
+          ) TO STDOUT WITH DELIMITER '|'
+      SQL
       source_connection.copy_data(copy_command) do
         while row = source_connection.get_copy_data
           zip.write(row)
