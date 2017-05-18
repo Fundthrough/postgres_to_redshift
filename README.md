@@ -47,7 +47,8 @@ export P2S3_S3_EXPORT_ID='yourid'
 export P2S3_S3_EXPORT_KEY='yourkey'
 export P2S3_S3_EXPORT_BUCKET='some-bucket-to-use'
 export P2S3_SERVICE_NAME='service_name in audits table'
-export P2S3_ARCHIVE_DATE='created_at in audits table in the format YYYY-MM-DD'
+export P2S3_ARCHIVE_FIELD='name of the date column in the table'
+export P2S3_ARCHIVE_DATE='a date column with format YYYY-MM-DD'
 
 postgres_to_s3
 ```
