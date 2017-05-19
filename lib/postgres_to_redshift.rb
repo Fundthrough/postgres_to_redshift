@@ -90,7 +90,7 @@ class PostgresToRedshift
       table_command = <<-SQL
         SELECT *
         FROM information_schema.tables
-        WHERE table_schema = '#{PostgresToRedshift.source_schema}' AND table_name = '#{PostgresToS3.source_table}'
+        WHERE table_schema = '#{PostgresToRedshift.source_schema}' AND table_name = '#{PostgresToRedshift.source_table}'
       SQL
     end
     source_connection.exec(table_command).map do |table_attributes|
