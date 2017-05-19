@@ -93,6 +93,7 @@ class PostgresToRedshift
         SELECT t.*
         FROM information_schema.tables t
         WHERE t.table_schema = '#{PostgresToRedshift.source_schema}' AND t.table_type in ('BASE TABLE') AND t.table_name NOT IN ('ar_internal_metadata','schema_migrations') AND LEFT(t.table_name,1) != '_'
+        ORDER BY t.table_name
       SQL
     elsif (PostgresToRedshift.source_table == 'ALL' && PostgresToRedshift.delete_option == 'incremental')
       table_command = <<-SQL
@@ -101,12 +102,14 @@ class PostgresToRedshift
           INNER JOIN information_schema.columns c1 ON t.table_name = c1.table_name AND t.table_schema = c1.table_schema AND c1.column_name = 'id'
           INNER JOIN information_schema.columns c2 ON t.table_name = c2.table_name AND t.table_schema = c2.table_schema AND c2.column_name = '#{PostgresToRedshift.condition_field}'
         WHERE t.table_schema = '#{PostgresToRedshift.source_schema}' AND t.table_type in ('BASE TABLE') AND t.table_name NOT IN ('ar_internal_metadata','schema_migrations') AND LEFT(t.table_name,1) != '_'
+        ORDER BY t.table_name
       SQL
     elsif (PostgresToRedshift.source_table != 'ALL' && PostgresToRedshift.delete_option != 'incremental')
       table_command = <<-SQL
         SELECT t.*
         FROM information_schema.tables t
         WHERE t.table_schema = '#{PostgresToRedshift.source_schema}' AND t.table_name = '#{PostgresToRedshift.source_table}'
+        ORDER BY t.table_name
       SQL
     elsif (PostgresToRedshift.source_table != 'ALL' && PostgresToRedshift.delete_option == 'incremental')
       table_command = <<-SQL
@@ -115,6 +118,7 @@ class PostgresToRedshift
           INNER JOIN information_schema.columns c1 ON t.table_name = c1.table_name AND t.table_schema = c1.table_schema AND c1.column_name = 'id'
           INNER JOIN information_schema.columns c2 ON t.table_name = c2.table_name AND t.table_schema = c2.table_schema AND c2.column_name = '#{PostgresToRedshift.condition_field}'
         WHERE t.table_schema = '#{PostgresToRedshift.source_schema}' AND t.table_name = '#{PostgresToRedshift.source_table}'
+        ORDER BY t.table_name
       SQL
     else
       puts "ERROR: variables not consistent with application specification"
