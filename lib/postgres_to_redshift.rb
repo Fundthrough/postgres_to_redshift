@@ -88,13 +88,13 @@ class PostgresToRedshift
   end
 
   def tables
-    if PostgresToRedshift.source_table == 'ALL' AND PostgresToRedshift.delete_option != 'incremental'
+    if (PostgresToRedshift.source_table == 'ALL' AND PostgresToRedshift.delete_option != 'incremental')
       table_command = <<-SQL
         SELECT t.*
         FROM information_schema.tables t
         WHERE t.table_schema = '#{PostgresToRedshift.source_schema}' AND t.table_type in ('BASE TABLE') AND t.table_name NOT IN ('ar_internal_metadata','schema_migrations') AND LEFT(t.table_name,1) != '_'
       SQL
-    elsif PostgresToRedshift.source_table == 'ALL' AND PostgresToRedshift.delete_option == 'incremental'
+    elsif (PostgresToRedshift.source_table == 'ALL' AND PostgresToRedshift.delete_option == 'incremental')
       table_command = <<-SQL
         SELECT t.*
         FROM information_schema.tables t
@@ -102,13 +102,13 @@ class PostgresToRedshift
           INNER JOIN information_schema.columns c2 ON t.table_name = c2.table_name AND t.table_schema = c2.table_schema AND c2.column_name = '#{PostgresToRedshift.condition_field}'
         WHERE t.table_schema = '#{PostgresToRedshift.source_schema}' AND t.table_type in ('BASE TABLE') AND t.table_name NOT IN ('ar_internal_metadata','schema_migrations') AND LEFT(t.table_name,1) != '_'
       SQL
-    elsif PostgresToRedshift.source_table != 'ALL' AND PostgresToRedshift.delete_option != 'incremental'
+    elsif (PostgresToRedshift.source_table != 'ALL' AND PostgresToRedshift.delete_option != 'incremental')
       table_command = <<-SQL
         SELECT t.*
         FROM information_schema.tables t
         WHERE t.table_schema = '#{PostgresToRedshift.source_schema}' AND t.table_name = '#{PostgresToRedshift.source_table}'
       SQL
-    elsif PostgresToRedshift.source_table != 'ALL' AND PostgresToRedshift.delete_option == 'incremental'
+    elsif (PostgresToRedshift.source_table != 'ALL' AND PostgresToRedshift.delete_option == 'incremental')
       table_command = <<-SQL
         SELECT t.*
         FROM information_schema.tables t
