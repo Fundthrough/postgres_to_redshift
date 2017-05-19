@@ -9,7 +9,7 @@ require "helper/column"
 
 class PostgresToRedshift
   class << self
-    attr_accessor :source_uri, :target_uri, :target_schema, :source_schema, :delete_option
+    attr_accessor :source_uri, :target_uri, :target_schema, :source_schema, :delete_option, :source_table
   end
 
   attr_reader :source_connection, :target_connection, :s3
@@ -36,6 +36,10 @@ class PostgresToRedshift
 
   def self.source_schema
     @source_schema ||= ENV['P2RS_SOURCE_SCHEMA']
+  end
+
+  def self.source_table
+    @source_table ||= ENV['P2RS_SOURCE_TABLE']
   end
 
   def self.target_schema
@@ -76,11 +80,19 @@ class PostgresToRedshift
   end
 
   def tables
-    table_command = <<-SQL
-      SELECT *
-      FROM information_schema.tables
-      WHERE table_schema = '#{PostgresToRedshift.source_schema}' AND table_type in ('BASE TABLE') AND table_name NOT IN ('ar_internal_metadata','schema_migrations') AND LEFT(table_name,1) != '_'
-    SQL
+    if PostgresToRedshift.source_table == 'ALL'
+      table_command = <<-SQL
+        SELECT *
+        FROM information_schema.tables
+        WHERE table_schema = '#{PostgresToRedshift.source_schema}' AND table_type in ('BASE TABLE') AND table_name NOT IN ('ar_internal_metadata','schema_migrations') AND LEFT(table_name,1) != '_'
+      SQL
+    else
+      table_command = <<-SQL
+        SELECT *
+        FROM information_schema.tables
+        WHERE table_schema = '#{PostgresToRedshift.source_schema}' AND table_name = '#{PostgresToS3.source_table}'
+      SQL
+    end
     source_connection.exec(table_command).map do |table_attributes|
     table = Helper::Table.new(attributes: table_attributes)
     next if table.name =~ /^pg_/

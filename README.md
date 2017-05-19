@@ -27,13 +27,14 @@ Set your source and target databases, as well as your s3 intermediary.
 ### postgres_to_redshift
 ```bash
 export P2RS_SOURCE_URI='postgres://username:password@host:port/database-name'
-export P2RS_TARGET_URI='postgres://username:password@host:port/database-name'
+export P2RS_SOURCE_SCHEMA='schema_name'
+export P2RS_SOURCE_TABLE='table_name|ALL' #ALL for all tables in the schema (aside from rails operational tables) eitherwise specify table name
 export P2RS_S3_EXPORT_ID='yourid'
 export P2RS_S3_EXPORT_KEY='yourkey'
 export P2RS_S3_EXPORT_BUCKET='some-bucket-to-use'
-export P2RS_SOURCE_SCHEMA='schema_name'
+export P2RS_TARGET_URI='postgres://username:password@host:port/database-name'
 export P2RS_TARGET_SCHEMA='schema_name'  #make sure target_schema exist in target DB
-export P2RS_DELETE_OPTION='truncate|drop'	#this define whether the destination tables should be truncated or drop
+export P2RS_DELETE_OPTION='truncate|drop|incremental' #this define whether the destination tables should be truncated or drop or batch load
 
 postgres_to_redshift
 ```
