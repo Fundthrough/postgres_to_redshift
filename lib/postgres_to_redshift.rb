@@ -9,7 +9,7 @@ require "helper/column"
 
 class PostgresToRedshift
   class << self
-    attr_accessor :source_uri, :target_uri, :target_schema, :source_schema, :delete_option, :source_table
+    attr_accessor :source_uri, :source_schema, :source_table, :target_uri, :target_schema, :delete_option, :condition_field, :condition_value
   end
 
   attr_reader :source_connection, :target_connection, :s3
@@ -42,16 +42,24 @@ class PostgresToRedshift
     @source_table ||= ENV['P2RS_SOURCE_TABLE']
   end
 
-  def self.target_schema
-    @target_schema ||= ENV['P2RS_TARGET_SCHEMA']
-  end
-
   def self.target_uri
     @target_uri ||= URI.parse(ENV['P2RS_TARGET_URI'])
   end
 
+  def self.target_schema
+    @target_schema ||= ENV['P2RS_TARGET_SCHEMA']
+  end
+
   def self.delete_option
     @delete_option ||= ENV["P2RS_DELETE_OPTION"]
+  end
+
+  def self.condition_field
+    @condition_field ||= ENV["P2RS_CONDITION_FIELD"]
+  end
+
+  def self.condition_value
+    @condition_value ||= ENV["P2RS_CONDITION_VALUE"]
   end
 
   def self.source_connection
@@ -80,17 +88,33 @@ class PostgresToRedshift
   end
 
   def tables
-    if PostgresToRedshift.source_table == 'ALL'
+    if PostgresToRedshift.source_table == 'ALL' AND PostgresToRedshift.delete_option != 'incremental'
       table_command = <<-SQL
-        SELECT *
-        FROM information_schema.tables
-        WHERE table_schema = '#{PostgresToRedshift.source_schema}' AND table_type in ('BASE TABLE') AND table_name NOT IN ('ar_internal_metadata','schema_migrations') AND LEFT(table_name,1) != '_'
+        SELECT t.*
+        FROM information_schema.tables t
+        WHERE t.table_schema = '#{PostgresToRedshift.source_schema}' AND t.table_type in ('BASE TABLE') AND t.table_name NOT IN ('ar_internal_metadata','schema_migrations') AND LEFT(t.table_name,1) != '_'
       SQL
-    else
+    elsif PostgresToRedshift.source_table == 'ALL' AND PostgresToRedshift.delete_option == 'incremental'
       table_command = <<-SQL
-        SELECT *
-        FROM information_schema.tables
-        WHERE table_schema = '#{PostgresToRedshift.source_schema}' AND table_name = '#{PostgresToRedshift.source_table}'
+        SELECT t.*
+        FROM information_schema.tables t
+          INNER JOIN information_schema.columns c1 ON t.table_name = c1.table_name AND t.table_schema = c1.table_schema AND c1.column_name = 'id'
+          INNER JOIN information_schema.columns c2 ON t.table_name = c2.table_name AND t.table_schema = c2.table_schema AND c2.column_name = '#{PostgresToRedshift.condition_field}'
+        WHERE t.table_schema = '#{PostgresToRedshift.source_schema}' AND t.table_type in ('BASE TABLE') AND t.table_name NOT IN ('ar_internal_metadata','schema_migrations') AND LEFT(t.table_name,1) != '_'
+      SQL
+    elsif PostgresToRedshift.source_table != 'ALL' AND PostgresToRedshift.delete_option != 'incremental'
+      table_command = <<-SQL
+        SELECT t.*
+        FROM information_schema.tables t
+        WHERE t.table_schema = '#{PostgresToRedshift.source_schema}' AND t.table_name = '#{PostgresToRedshift.source_table}'
+      SQL
+    elsif PostgresToRedshift.source_table != 'ALL' AND PostgresToRedshift.delete_option == 'incremental'
+      table_command = <<-SQL
+        SELECT t.*
+        FROM information_schema.tables t
+          INNER JOIN information_schema.columns c1 ON t.table_name = c1.table_name AND t.table_schema = c1.table_schema AND c1.column_name = 'id'
+          INNER JOIN information_schema.columns c2 ON t.table_name = c2.table_name AND t.table_schema = c2.table_schema AND c2.column_name = '#{PostgresToRedshift.condition_field}'
+        WHERE t.table_schema = '#{PostgresToRedshift.source_schema}' AND t.table_name = '#{PostgresToRedshift.source_table}'
       SQL
     end
     source_connection.exec(table_command).map do |table_attributes|

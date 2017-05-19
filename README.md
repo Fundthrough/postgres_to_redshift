@@ -35,6 +35,8 @@ export P2RS_S3_EXPORT_BUCKET='some-bucket-to-use'
 export P2RS_TARGET_URI='postgres://username:password@host:port/database-name'
 export P2RS_TARGET_SCHEMA='schema_name'  #make sure target_schema exist in target DB
 export P2RS_DELETE_OPTION='truncate|drop|incremental' #this define whether the destination tables should be truncated or drop or batch load
+export P2RS_CONDITION_FIELD='na|column_name' #use to decide which time-series field to use for calculating incremental data load
+export P2RS_CONDITION_VALUE='na|some_number' #a number value to determine how many MINUTES we should look for last updated records
 
 postgres_to_redshift
 ```
