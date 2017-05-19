@@ -220,7 +220,7 @@ class PostgresToRedshift
       end
     elsif PostgresToRedshift.delete_option == 'incremental'
       copy_from_command = <<-SQL
-        COPY #{PostgresToRedshift.target_schema}.#{target_connection.quote_ident(table.target_table_name)}_temp
+        COPY #{PostgresToRedshift.target_schema}.#{table.target_table_name}_temp
         FROM 's3://#{ENV['P2RS_S3_EXPORT_BUCKET']}/#{PostgresToRedshift.target_schema}/#{table.target_table_name}.psv.gz'
         CREDENTIALS 'aws_access_key_id=#{ENV['P2RS_S3_EXPORT_ID']};aws_secret_access_key=#{ENV['P2RS_S3_EXPORT_KEY']}'
         GZIP TRUNCATECOLUMNS ESCAPE DELIMITER as '|' COMPUPDATE ON
