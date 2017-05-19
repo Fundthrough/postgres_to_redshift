@@ -154,14 +154,14 @@ class PostgresToRedshift
 
     begin
       puts "DOWNLOADING #{table}"
-      if delete_option != 'incremental'
+      if PostgresToRedshift.delete_option != 'incremental'
         copy_to_command = <<-SQL
           COPY (
             SELECT #{table.columns_for_copy}
             FROM #{PostgresToRedshift.source_schema}.#{table.name}
             ) TO STDOUT WITH DELIMITER '|'
         SQL
-      elsif delete_option == 'incremental'
+      elsif PostgresToRedshift.delete_option == 'incremental'
         copy_to_command = <<-SQL
           COPY (
             SELECT #{table.columns_for_copy}
