@@ -154,12 +154,24 @@ class PostgresToRedshift
 
     begin
       puts "DOWNLOADING #{table}"
-      copy_to_command = <<-SQL
-        COPY (
-          SELECT #{table.columns_for_copy}
-          FROM #{PostgresToRedshift.source_schema}.#{table.name}
-          ) TO STDOUT WITH DELIMITER '|'
-      SQL
+      if delete_option != 'incremental'
+        copy_to_command = <<-SQL
+          COPY (
+            SELECT #{table.columns_for_copy}
+            FROM #{PostgresToRedshift.source_schema}.#{table.name}
+            ) TO STDOUT WITH DELIMITER '|'
+        SQL
+      elsif delete_option == 'incremental'
+        copy_to_command = <<-SQL
+          COPY (
+            SELECT #{table.columns_for_copy}
+            FROM #{PostgresToRedshift.source_schema}.#{table.name}
+            WHERE DATEDIFF(m,#{PostgresToRedshift.condition_field},getdate()) < #{PostgresToRedshift.condition_value}
+            ) TO STDOUT WITH DELIMITER '|'
+        SQL
+      else
+        puts "ERROR: variables not consistent with application specification"
+      end
       source_connection.copy_data(copy_to_command) do
         while row = source_connection.get_copy_data
           zip.write(row)
