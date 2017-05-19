@@ -7,7 +7,7 @@ require 'tempfile'
 require "helper/table"
 require "helper/column"
 
-class PostgresToRedshift
+class PostgresToRS
   class << self
     attr_accessor :source_uri, :target_uri, :target_schema, :source_schema, :delete_option, :source_table
   end
@@ -19,7 +19,7 @@ class PostgresToRedshift
   GIGABYTE = MEGABYTE * 1024
 
   def self.update_tables
-    update_tables = PostgresToRedshift.new
+    update_tables = PostgresToRS.new
 
     update_tables.tables.each do |table|
       #target_connection.exec("CREATE TABLE IF NOT EXISTS #{target_schema}.#{target_connection.quote_ident(table.target_table_name)} (#{table.columns_for_create})")
@@ -80,17 +80,17 @@ class PostgresToRedshift
   end
 
   def tables
-    if PostgresToRedshift.source_table == 'ALL'
+    if PostgresToRS.source_table == 'ALL'
       table_command = <<-SQL
         SELECT *
         FROM information_schema.tables
-        WHERE table_schema = '#{PostgresToRedshift.source_schema}' AND table_type in ('BASE TABLE') AND table_name NOT IN ('ar_internal_metadata','schema_migrations') AND LEFT(table_name,1) != '_'
+        WHERE table_schema = '#{PostgresToRS.source_schema}' AND table_type in ('BASE TABLE') AND table_name NOT IN ('ar_internal_metadata','schema_migrations') AND LEFT(table_name,1) != '_'
       SQL
     else
       table_command = <<-SQL
         SELECT *
         FROM information_schema.tables
-        WHERE table_schema = '#{PostgresToRedshift.source_schema}' AND table_name = '#{PostgresToRedshift.source_table}'
+        WHERE table_schema = '#{PostgresToRS.source_schema}' AND table_name = '#{PostgresToRS.source_table}'
       SQL
     end
     source_connection.exec(table_command).map do |table_attributes|
@@ -105,7 +105,7 @@ class PostgresToRedshift
     column_command = <<-SQL
       SELECT *
       FROM information_schema.columns
-      WHERE table_schema = '#{PostgresToRedshift.source_schema}' AND table_name='#{table.name}' order by ordinal_position
+      WHERE table_schema = '#{PostgresToRS.source_schema}' AND table_name='#{table.name}' order by ordinal_position
     SQL
     source_connection.exec(column_command)
   end
@@ -124,14 +124,14 @@ class PostgresToRedshift
     chunksize = 5 * GIGABYTE # uncompressed
     chunk = 1
 
-    bucket.objects.with_prefix("#{PostgresToRedshift.target_schema}/#{table.target_table_name}.psv.gz").delete_all
+    bucket.objects.with_prefix("#{PostgresToRS.target_schema}/#{table.target_table_name}.psv.gz").delete_all
 
     begin
       puts "DOWNLOADING #{table}"
       copy_to_command = <<-SQL
         COPY (
           SELECT #{table.columns_for_copy}
-          FROM #{PostgresToRedshift.source_schema}.#{table.name}
+          FROM #{PostgresToRS.source_schema}.#{table.name}
           ) TO STDOUT WITH DELIMITER '|'
       SQL
       source_connection.copy_data(copy_to_command) do
@@ -160,41 +160,41 @@ class PostgresToRedshift
   end
 
   def upload_table(table, buffer, chunk)
-    puts "UPLOADING #{PostgresToRedshift.target_schema}/#{table.target_table_name}.psv.gz.#{chunk}"
+    puts "UPLOADING #{PostgresToRS.target_schema}/#{table.target_table_name}.psv.gz.#{chunk}"
 
-    bucket.objects["#{PostgresToRedshift.target_schema}/#{table.target_table_name}.psv.gz.#{chunk}"].write(buffer, acl: :authenticated_read)
+    bucket.objects["#{PostgresToRS.target_schema}/#{table.target_table_name}.psv.gz.#{chunk}"].write(buffer, acl: :authenticated_read)
 
   end
 
   def import_table(table)
 
-    puts "IMPORTING #{PostgresToRedshift.target_schema}.#{table.target_table_name}"
+    puts "IMPORTING #{PostgresToRS.target_schema}.#{table.target_table_name}"
 
     copy_from_command = <<-SQL
-      COPY #{PostgresToRedshift.target_schema}.#{target_connection.quote_ident(table.target_table_name)}
-      FROM 's3://#{ENV['P2RS_S3_EXPORT_BUCKET']}/#{PostgresToRedshift.target_schema}/#{table.target_table_name}.psv.gz'
+      COPY #{PostgresToRS.target_schema}.#{target_connection.quote_ident(table.target_table_name)}
+      FROM 's3://#{ENV['P2RS_S3_EXPORT_BUCKET']}/#{PostgresToRS.target_schema}/#{table.target_table_name}.psv.gz'
       CREDENTIALS 'aws_access_key_id=#{ENV['P2RS_S3_EXPORT_ID']};aws_secret_access_key=#{ENV['P2RS_S3_EXPORT_KEY']}'
       GZIP TRUNCATECOLUMNS ESCAPE DELIMITER as '|' COMPUPDATE ON
     SQL
 
-    if PostgresToRedshift.delete_option == 'drop'
-      puts "DROP TABLE IF EXISTS #{PostgresToRedshift.target_schema}.#{table.target_table_name}"
-      target_connection.exec("DROP TABLE IF EXISTS #{PostgresToRedshift.target_schema}.#{table.target_table_name}")
+    if PostgresToRS.delete_option == 'drop'
+      puts "DROP TABLE IF EXISTS #{PostgresToRS.target_schema}.#{table.target_table_name}"
+      target_connection.exec("DROP TABLE IF EXISTS #{PostgresToRS.target_schema}.#{table.target_table_name}")
 
-      puts "CREATE TABLE #{PostgresToRedshift.target_schema}.#{table.target_table_name}"
-      target_connection.exec("CREATE TABLE #{PostgresToRedshift.target_schema}.#{target_connection.quote_ident(table.target_table_name)} (#{table.columns_for_create})")
+      puts "CREATE TABLE #{PostgresToRS.target_schema}.#{table.target_table_name}"
+      target_connection.exec("CREATE TABLE #{PostgresToRS.target_schema}.#{target_connection.quote_ident(table.target_table_name)} (#{table.columns_for_create})")
 
-      puts "COPY TABLE to #{PostgresToRedshift.target_schema}.#{table.target_table_name}"
+      puts "COPY TABLE to #{PostgresToRS.target_schema}.#{table.target_table_name}"
       target_connection.exec(copy_from_command)
 
-    elsif PostgresToRedshift.delete_option == 'truncate'
-      puts "CREATE TABLE IF NOT EXISTS #{PostgresToRedshift.target_schema}.#{table.target_table_name}"
-      target_connection.exec("CREATE TABLE IF NOT EXISTS #{PostgresToRedshift.target_schema}.#{target_connection.quote_ident(table.target_table_name)} (#{table.columns_for_create})")
+    elsif PostgresToRS.delete_option == 'truncate'
+      puts "CREATE TABLE IF NOT EXISTS #{PostgresToRS.target_schema}.#{table.target_table_name}"
+      target_connection.exec("CREATE TABLE IF NOT EXISTS #{PostgresToRS.target_schema}.#{target_connection.quote_ident(table.target_table_name)} (#{table.columns_for_create})")
 
-      puts "TRUNCATE TABLE #{PostgresToRedshift.target_schema}.#{table.target_table_name}"
-      target_connection.exec("TRUNCATE TABLE #{PostgresToRedshift.target_schema}.#{table.target_table_name}")
+      puts "TRUNCATE TABLE #{PostgresToRS.target_schema}.#{table.target_table_name}"
+      target_connection.exec("TRUNCATE TABLE #{PostgresToRS.target_schema}.#{table.target_table_name}")
 
-      puts "COPY TABLE to #{PostgresToRedshift.target_schema}.#{table.target_table_name}"
+      puts "COPY TABLE to #{PostgresToRS.target_schema}.#{table.target_table_name}"
       target_connection.exec(copy_from_command)
 
     else
