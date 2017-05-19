@@ -116,6 +116,8 @@ class PostgresToRedshift
           INNER JOIN information_schema.columns c2 ON t.table_name = c2.table_name AND t.table_schema = c2.table_schema AND c2.column_name = '#{PostgresToRedshift.condition_field}'
         WHERE t.table_schema = '#{PostgresToRedshift.source_schema}' AND t.table_name = '#{PostgresToRedshift.source_table}'
       SQL
+    else
+      puts "ERROR: variables not consistent with application specification"
     end
     source_connection.exec(table_command).map do |table_attributes|
     table = Helper::Table.new(attributes: table_attributes)
@@ -191,38 +193,44 @@ class PostgresToRedshift
   end
 
   def import_table(table)
-
     puts "IMPORTING #{PostgresToRedshift.target_schema}.#{table.target_table_name}"
-
-    copy_from_command = <<-SQL
-      COPY #{PostgresToRedshift.target_schema}.#{target_connection.quote_ident(table.target_table_name)}
-      FROM 's3://#{ENV['P2RS_S3_EXPORT_BUCKET']}/#{PostgresToRedshift.target_schema}/#{table.target_table_name}.psv.gz'
-      CREDENTIALS 'aws_access_key_id=#{ENV['P2RS_S3_EXPORT_ID']};aws_secret_access_key=#{ENV['P2RS_S3_EXPORT_KEY']}'
-      GZIP TRUNCATECOLUMNS ESCAPE DELIMITER as '|' COMPUPDATE ON
-    SQL
-
-    if PostgresToRedshift.delete_option == 'drop'
-      puts "DROP TABLE IF EXISTS #{PostgresToRedshift.target_schema}.#{table.target_table_name}"
-      target_connection.exec("DROP TABLE IF EXISTS #{PostgresToRedshift.target_schema}.#{table.target_table_name}")
-
-      puts "CREATE TABLE #{PostgresToRedshift.target_schema}.#{table.target_table_name}"
-      target_connection.exec("CREATE TABLE #{PostgresToRedshift.target_schema}.#{target_connection.quote_ident(table.target_table_name)} (#{table.columns_for_create})")
-
-      puts "COPY TABLE to #{PostgresToRedshift.target_schema}.#{table.target_table_name}"
+    if (PostgresToRedshift.delete_option == 'drop' || PostgresToRedshift.delete_option == 'truncate')
+      copy_from_command = <<-SQL
+        COPY #{PostgresToRedshift.target_schema}.#{target_connection.quote_ident(table.target_table_name)}
+        FROM 's3://#{ENV['P2RS_S3_EXPORT_BUCKET']}/#{PostgresToRedshift.target_schema}/#{table.target_table_name}.psv.gz'
+        CREDENTIALS 'aws_access_key_id=#{ENV['P2RS_S3_EXPORT_ID']};aws_secret_access_key=#{ENV['P2RS_S3_EXPORT_KEY']}'
+        GZIP TRUNCATECOLUMNS ESCAPE DELIMITER as '|' COMPUPDATE ON
+      SQL
+      if PostgresToRedshift.delete_option == 'drop'
+        puts "DROP TABLE IF EXISTS #{PostgresToRedshift.target_schema}.#{table.target_table_name}"
+        target_connection.exec("DROP TABLE IF EXISTS #{PostgresToRedshift.target_schema}.#{table.target_table_name}")
+        puts "CREATE TABLE #{PostgresToRedshift.target_schema}.#{table.target_table_name}"
+        target_connection.exec("CREATE TABLE #{PostgresToRedshift.target_schema}.#{target_connection.quote_ident(table.target_table_name)} (#{table.columns_for_create})")
+        puts "COPY TABLE to #{PostgresToRedshift.target_schema}.#{table.target_table_name}"
+        target_connection.exec(copy_from_command)
+      elsif PostgresToRedshift.delete_option == 'truncate'
+        puts "CREATE TABLE IF NOT EXISTS #{PostgresToRedshift.target_schema}.#{table.target_table_name}"
+        target_connection.exec("CREATE TABLE IF NOT EXISTS #{PostgresToRedshift.target_schema}.#{target_connection.quote_ident(table.target_table_name)} (#{table.columns_for_create})")
+        puts "TRUNCATE TABLE #{PostgresToRedshift.target_schema}.#{table.target_table_name}"
+        target_connection.exec("TRUNCATE TABLE #{PostgresToRedshift.target_schema}.#{table.target_table_name}")
+        puts "COPY TABLE to #{PostgresToRedshift.target_schema}.#{table.target_table_name}"
+        target_connection.exec(copy_from_command)
+      else
+        puts "ERROR: variables not consistent with application specification"
+      end
+    elsif PostgresToRedshift.delete_option == 'incremental'
+      copy_from_command = <<-SQL
+        COPY #{PostgresToRedshift.target_schema}.#{target_connection.quote_ident(table.target_table_name)}_temp
+        FROM 's3://#{ENV['P2RS_S3_EXPORT_BUCKET']}/#{PostgresToRedshift.target_schema}/#{table.target_table_name}.psv.gz'
+        CREDENTIALS 'aws_access_key_id=#{ENV['P2RS_S3_EXPORT_ID']};aws_secret_access_key=#{ENV['P2RS_S3_EXPORT_KEY']}'
+        GZIP TRUNCATECOLUMNS ESCAPE DELIMITER as '|' COMPUPDATE ON
+      SQL
+      puts "DROP TABLE IF EXISTS #{PostgresToRedshift.target_schema}.#{table.target_table_name}_temp"
+      target_connection.exec("DROP TABLE IF EXISTS #{PostgresToRedshift.target_schema}.#{table.target_table_name}_temp")
+      puts "CREATE TABLE #{PostgresToRedshift.target_schema}.#{table.target_table_name}_temp"
+      target_connection.exec("CREATE TABLE #{PostgresToRedshift.target_schema}.#{table.target_table_name}_temp (#{table.columns_for_create})")
+      puts "COPY TABLE to #{PostgresToRedshift.target_schema}.#{table.target_table_name}_temp"
       target_connection.exec(copy_from_command)
-
-    elsif PostgresToRedshift.delete_option == 'truncate'
-      puts "CREATE TABLE IF NOT EXISTS #{PostgresToRedshift.target_schema}.#{table.target_table_name}"
-      target_connection.exec("CREATE TABLE IF NOT EXISTS #{PostgresToRedshift.target_schema}.#{target_connection.quote_ident(table.target_table_name)} (#{table.columns_for_create})")
-
-      puts "TRUNCATE TABLE #{PostgresToRedshift.target_schema}.#{table.target_table_name}"
-      target_connection.exec("TRUNCATE TABLE #{PostgresToRedshift.target_schema}.#{table.target_table_name}")
-
-      puts "COPY TABLE to #{PostgresToRedshift.target_schema}.#{table.target_table_name}"
-      target_connection.exec(copy_from_command)
-
-    else
-      puts "missing delete_option"
     end
   end
 end
