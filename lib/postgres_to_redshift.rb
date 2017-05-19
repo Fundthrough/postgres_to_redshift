@@ -166,7 +166,7 @@ class PostgresToRedshift
           COPY (
             SELECT #{table.columns_for_copy}
             FROM #{PostgresToRedshift.source_schema}.#{table.name}
-            WHERE DATEDIFF(m,#{PostgresToRedshift.condition_field},getdate()) < #{PostgresToRedshift.condition_value}
+            WHERE #{PostgresToRedshift.condition_field} > (localtimestamp - interval '#{PostgresToRedshift.condition_value} minute')
             ) TO STDOUT WITH DELIMITER '|'
         SQL
       else
