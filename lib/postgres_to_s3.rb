@@ -6,6 +6,7 @@ require 'zlib'
 require 'tempfile'
 require "helper/table"
 require "helper/column"
+require "helper/slack_notifier"
 
 class PostgresToS3
   class << self
@@ -20,10 +21,13 @@ class PostgresToS3
 
   def self.archive_tables
     archive_tables = PostgresToS3.new
-
     archive_tables.tables.each do |table|
       archive_tables.copy_table(table)
+      message = "Successfully Archived: #{PostgresToS3.service_name}/#{PostgresToS3.service_name}-#{PostgresToS3.archive_date}-#{table.target_table_name}"
+      SLACK_NOTIFIER.ping message
     end
+  rescue => e
+    SLACK_NOTIFIER.ping e.message
   end
 
   def self.source_uri

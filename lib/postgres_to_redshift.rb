@@ -6,6 +6,7 @@ require 'zlib'
 require 'tempfile'
 require "helper/table"
 require "helper/column"
+require "helper/slack_notifier"
 
 class PostgresToRedshift
   class << self
@@ -20,14 +21,12 @@ class PostgresToRedshift
 
   def self.update_tables
     update_tables = PostgresToRedshift.new
-
     update_tables.tables.each do |table|
-      #target_connection.exec("CREATE TABLE IF NOT EXISTS #{target_schema}.#{target_connection.quote_ident(table.target_table_name)} (#{table.columns_for_create})")
-
       update_tables.copy_table(table)
-
       update_tables.import_table(table)
     end
+  rescue => e
+    SLACK_NOTIFIER.ping e.message
   end
 
   def self.source_uri
