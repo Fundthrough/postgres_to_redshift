@@ -2,6 +2,7 @@ require "helper/version"
 require 'pg'
 require 'uri'
 require 'aws-sdk-v1'
+require 'slack-notifier'
 require 'zlib'
 require 'tempfile'
 require "helper/table"
@@ -21,12 +22,20 @@ class PostgresToRedshift
 
   def self.update_tables
     update_tables = PostgresToRedshift.new
+    if update_tables.tables.size == 0
+      message = "[P2RS]MISSING: Table(s) not found using the following parameters:\n[P2RS]MISSING: source_schema: #{ENV["P2RS_SOURCE_SCHEMA"]}\n[P2RS]MISSING: source_table: #{ENV["P2RS_SOURCE_TABLE"]}\n[P2RS]MISSING: delete_option: #{ENV["P2RS_DELETE_OPTION"]}"
+      SLACK_NOTIFIER.ping message
+    end
     update_tables.tables.each do |table|
       update_tables.copy_table(table)
       update_tables.import_table(table)
     end
+    if (PostgresToRedshift.delete_option != 'incremental')
+      message = "[P2RS]SUCCESS: Table(s) #{PostgresToRedshift.delete_option} and copy to RedShift SCHEMA: #{PostgresToRedshift.target_schema}"
+      SLACK_NOTIFIER.ping message
+    end
   rescue => e
-    SLACK_NOTIFIER.ping e.message
+    SLACK_NOTIFIER.ping "[P2RS]#{e.message.gsub("\r","").gsub("\n","")} SCHEMA: #{PostgresToRedshift.target_schema} OPTION: #{PostgresToRedshift.delete_option}"
   end
 
   def self.source_uri
