@@ -35,7 +35,7 @@ class PostgresToRedshift
       SLACK_NOTIFIER.ping message
     end
   rescue => e
-    SLACK_NOTIFIER.ping "[P2RS]#{e.message.gsub("\r"," ").gsub("\n"," ")}| SCHEMA: #{PostgresToRedshift.target_schema} | TABLE: #{update_tables.table.target_table_name} | OPTION: #{PostgresToRedshift.delete_option}"
+    SLACK_NOTIFIER.ping "[P2RS]#{e.message.gsub("\r"," ").gsub("\n"," ")} | SCHEMA: #{PostgresToRedshift.target_schema} | TABLE: #{update_tables.table.target_table_name} | OPTION: #{PostgresToRedshift.delete_option}"
   end
 
   def self.source_uri

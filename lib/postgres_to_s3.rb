@@ -30,7 +30,7 @@ class PostgresToS3
       archive_tables.copy_table(table)
     end
   rescue => e
-    SLACK_NOTIFIER.ping "[P2S3]#{e.message.gsub("\r"," ").gsub("\n"," ")}| SERVICE: #{PostgresToS3.service_name} | TABLE: #{PostgresToS3.source_table} | DATE: #{PostgresToS3.archive_date}"
+    SLACK_NOTIFIER.ping "[P2S3]#{e.message.gsub("\r"," ").gsub("\n"," ")} | SERVICE: #{PostgresToS3.service_name} | TABLE: #{PostgresToS3.source_table} | DATE: #{PostgresToS3.archive_date}"
   end
 
   def self.source_uri
