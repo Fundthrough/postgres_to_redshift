@@ -140,7 +140,7 @@ class PostgresToRedshift
   end
 
   def column_definitions(table)
-    if (PostgresToRedshift.target_schema = 'jekyll_data' && table.name = 'cortex_trading_groups') #exception for cortex_trading_groups to not exclude any columns
+    if (PostgresToRedshift.target_schema == 'jekyll_data' && table.name == 'cortex_trading_groups') #exception for cortex_trading_groups to not exclude any columns
       column_command = <<-SQL
         SELECT *
         FROM information_schema.columns
