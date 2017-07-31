@@ -143,7 +143,7 @@ class PostgresToRedshift
     column_command = <<-SQL
       SELECT *
       FROM information_schema.columns
-      WHERE table_schema = '#{PostgresToRedshift.source_schema}' AND table_name='#{table.name}' AND LOWER(column_name) NOT LIKE '%password%' AND LOWER(column_name) NOT LIKE '%token%' AND lower(column_name) NOT LIKE '%encrypted%'
+      WHERE table_schema = '#{PostgresToRedshift.source_schema}' AND table_name='#{table.name}' AND LOWER(column_name) NOT LIKE '%password%' AND LOWER(column_name) NOT LIKE '%_token%' AND lower(column_name) NOT LIKE '%encrypted%' AND lower(column_name) NOT LIKE '%tokens%'
       ORDER BY ordinal_position
     SQL
     source_connection.exec(column_command)
