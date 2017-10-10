@@ -12,7 +12,7 @@ require "pry-rails"
 
 class RedshiftToS3
   class << self
-    attr_accessor :source_uri, :source_schema, :source_table, :archive_date, :archive_field
+    attr_accessor :source_uri, :source_schema, :source_table, :archive_date
   end
 
   attr_reader :source_connection, :s3
@@ -47,11 +47,7 @@ class RedshiftToS3
   end
 
   def self.archive_date
-    @archive_date ||= ENV['RS2S3_ARCHIVE_DATE']
-  end
-
-  def self.archive_field
-    @archive_field ||= ENV['RS2S3_ARCHIVE_FIELD']
+    @archive_date ||= Time.zone.now.strftime("%F-%T")
   end
 
   def self.source_connection

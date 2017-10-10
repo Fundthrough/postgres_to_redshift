@@ -51,7 +51,7 @@ class PostgresToS3
   end
 
   def self.archive_date
-    @archive_date ||= Time.zone.now.strftime("%F-%T")
+    @archive_date ||= ENV['P2S3_ARCHIVE_DATE']
   end
 
   def self.archive_field
