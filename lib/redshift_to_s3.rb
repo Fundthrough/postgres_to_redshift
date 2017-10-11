@@ -47,7 +47,7 @@ class RedshiftToS3
   end
 
   def self.archive_date
-    @archive_date ||= Time.zone.now.strftime("%F-%T")
+    @archive_date ||= Time.now.strftime("%F")
   end
 
   def self.source_connection
@@ -112,7 +112,8 @@ class RedshiftToS3
           FROM #{RedshiftToS3.source_schema}.#{table.name}
       SQL
       source_connection.exec(copy_to_command).each do |row|
-        zip.write(row)
+        formatted_row = row.values.map { |a| a.nil? ? "\\N" : a.gsub("|", "\\|") }.join("|")
+        zip.write(formatted_row += "\n")
         if (zip.pos > chunksize)
           zip.finish
           tmpfile.rewind
