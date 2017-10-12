@@ -30,8 +30,8 @@ class RedshiftToS3
     archive_tables.tables.each do |table|
       archive_tables.copy_table(table)
     end
-  # rescue => e
-  #   SLACK_NOTIFIER.ping "[RS2S3]#{e.message.gsub("\r"," ").gsub("\n"," ")} | SCHEMA: #{RedshiftToS3.source_schema} | TABLE: #{RedshiftToS3.source_table} | DATE: #{RedshiftToS3.archive_date}"
+  rescue => e
+    SLACK_NOTIFIER.ping "[RS2S3]#{e.message.gsub("\r"," ").gsub("\n"," ")} | SCHEMA: #{RedshiftToS3.source_schema} | TABLE: #{RedshiftToS3.source_table} | DATE: #{RedshiftToS3.archive_date}"
   end
 
   def self.source_uri
