@@ -51,7 +51,6 @@ class RedshiftToS3
   end
 
   def self.source_connection
-
     unless instance_variable_defined?(:"@source_connection")
       @source_connection = PG::Connection.new(host: source_uri.host, port: source_uri.port, user: source_uri.user || ENV['USER'], password: URI.decode(source_uri.password), dbname: source_uri.path[1..-1])
       @source_connection.exec("SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY;")
