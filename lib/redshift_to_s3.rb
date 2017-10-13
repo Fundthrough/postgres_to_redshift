@@ -51,8 +51,9 @@ class RedshiftToS3
   end
 
   def self.source_connection
+
     unless instance_variable_defined?(:"@source_connection")
-      @source_connection = PG::Connection.new(host: source_uri.host, port: source_uri.port, user: source_uri.user || ENV['USER'], password: source_uri.password, dbname: source_uri.path[1..-1])
+      @source_connection = PG::Connection.new(host: source_uri.host, port: source_uri.port, user: source_uri.user || ENV['USER'], password: URI.decode(source_uri.password), dbname: source_uri.path[1..-1])
       @source_connection.exec("SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY;")
     end
 
@@ -129,7 +130,7 @@ class RedshiftToS3
       tmpfile.rewind
       upload_table(table, tmpfile, chunk, timestamp)
       if (RedshiftToS3.slack_on_success == 'true')
-        message = "[RS2S3]SUCCESS: Archived #{RedshiftToS3.source_schema}/#{RedshiftToS3.source_schema}-#{RedshiftToS3.archive_date}-#{table.target_table_name} | Total Chunk(s): #{chunk} | SCHEMA: #{RedshiftToS3.source_schema} | TABLE: #{RedshiftToS3.source_table} | DATE: #{RedshiftToS3.archive_date}"
+        message = "[RS2S3]SUCCESS: Archived #{RedshiftToS3.source_schema}/#{RedshiftToS3.source_schema}-#{table.target_table_name}-#{RedshiftToS3.archive_date} | Total Chunk(s): #{chunk} | SCHEMA: #{RedshiftToS3.source_schema} | TABLE: #{RedshiftToS3.source_table} | DATE: #{RedshiftToS3.archive_date}"
         SLACK_NOTIFIER.ping message
       end
       source_connection.reset
@@ -140,10 +141,10 @@ class RedshiftToS3
   end
 
   def upload_table(table, buffer, chunk, timestamp)
-    bucket.objects["#{RedshiftToS3.source_schema}/#{RedshiftToS3.source_schema}-#{RedshiftToS3.archive_date}-#{table.target_table_name}-#{timestamp}.psv.gz.#{chunk}"].write(buffer, acl: :authenticated_read)
+    bucket.objects["#{RedshiftToS3.source_schema}/#{RedshiftToS3.source_schema}-#{table.target_table_name}-#{RedshiftToS3.archive_date}-#{timestamp}.psv.gz.#{chunk}"].write(buffer, acl: :authenticated_read)
 
     if (RedshiftToS3.slack_on_success == 'true')
-      message = "[RS2S3]FINISH: Archived #{RedshiftToS3.source_schema}/#{RedshiftToS3.source_schema}-#{RedshiftToS3.archive_date}-#{table.target_table_name}-#{timestamp}.psv.gz.#{chunk}"
+      message = "[RS2S3]FINISH: Archived #{RedshiftToS3.source_schema}/#{RedshiftToS3.source_schema}-#{table.target_table_name}-#{RedshiftToS3.archive_date}-#{timestamp}.psv.gz.#{chunk}"
       SLACK_NOTIFIER.ping message
     end
   end
