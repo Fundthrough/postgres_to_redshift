@@ -111,7 +111,11 @@ class RedshiftToS3
           SELECT *
           FROM #{RedshiftToS3.source_schema}.#{table.name}
       SQL
-      source_connection.exec(copy_to_command).each do |row|
+      puts "starting to fetch table"
+      records = source_connection.exec(copy_to_command)
+      puts "table fetched."
+
+      records.each_with_index do |row, index|
         formatted_row = row.values.map { |a| a.nil? ? "\\N" : a.gsub("|", "\\|") }.join("|")
         zip.write(formatted_row += "\n")
         if (zip.pos > chunksize)
@@ -124,6 +128,7 @@ class RedshiftToS3
           tmpfile = Tempfile.new("rd2s3")
           zip = Zlib::GzipWriter.new(tmpfile)
         end
+        puts "#{index} records done.." if (index % 100_000).zero?
       end
       zip.finish
       tmpfile.rewind
@@ -140,6 +145,7 @@ class RedshiftToS3
   end
 
   def upload_table(table, buffer, chunk, timestamp)
+    puts "uploading table"
     bucket.objects["#{RedshiftToS3.source_schema}/#{RedshiftToS3.source_schema}-#{table.target_table_name}-#{RedshiftToS3.archive_date}-#{timestamp}.psv.gz.#{chunk}"].write(buffer, acl: :authenticated_read)
 
     if (RedshiftToS3.slack_on_success == 'true')
